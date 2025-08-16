@@ -377,87 +377,75 @@ class Glare(Effect):
 
 class Dust(Effect):
     """
-    Simulates dust particles, scratches, and semi-transparent grime splotches.
+    Simulates dust particles, scratches, and semi-transparent grime splotches
+    with a focus on physical realism.
     """
     def __init__(self,
-                 num_specks: int = 5000,
-                 speck_color: tuple = (50, 50, 50),
-                 num_scratches: int = 5,
-                 scratch_length_range: tuple = (-50, 50),
-                 scratch_color_range: tuple = (50, 100),
-                 num_splotches: int = 5,
-                 splotch_size_range_factor: tuple = (0.05, 0.1),
+                 num_specks: int = 500,
+                 speck_radius_range: tuple = (1, 4),
+                 speck_opacity: float = 0.2,
+                 num_scratches: int = 3,
+                 scratch_length_range: tuple = (10, 80),
+                 scratch_opacity: float = 0.2,
+                 splotch_noise_scale: int = 16,
                  splotch_opacity: float = 0.15):
         """
-        Initializes the Dust effect with detailed parameters.
-
-        Args:
-            num_specks (int): Number of fine dust specks.
-            speck_color (tuple): RGB color of the specks.
-            num_scratches (int): Number of scratches or fibers.
-            scratch_length_range (tuple): Range for random length of scratches.
-            scratch_color_range (tuple): (min, max) brightness for scratch color.
-            num_splotches (int): Number of larger grime splotches.
-            splotch_size_range_factor (tuple): (min, max) factor of image width for splotch size.
-            splotch_opacity (float): Opacity of the grime splotches.
+        Initializes the Dust effect.
         """
         self.num_specks = num_specks
-        self.speck_color = speck_color
+        self.speck_radius_range = speck_radius_range
+        self.speck_color = (40, 40, 40, int(speck_opacity * 255)) # Dark grey, not pure black
+        
         self.num_scratches = num_scratches
         self.scratch_length_range = scratch_length_range
-        self.scratch_color_range = scratch_color_range
-        self.num_splotches = num_splotches
-        self.splotch_size_range_factor = splotch_size_range_factor
+        self.scratch_color = (80, 80, 80, int(scratch_opacity * 255))
+        
+        self.splotch_noise_scale = splotch_noise_scale
         self.splotch_opacity = splotch_opacity
+        self.splotch_base_color = np.array([50, 50, 50]) # BGR
 
     def apply(self, image):
-        img_out = image.copy()
         h, w, _ = image.shape
+        overlay = np.zeros((h, w, 4), dtype=np.uint8)
 
-        # 1. Add fine dust specks
+        # --- 1. Grime Splotches using Procedural Noise ---
+        if self.splotch_opacity > 0:
+            noise_h, noise_w = h // self.splotch_noise_scale, w // self.splotch_noise_scale
+            noise = np.random.randint(0, 255, (noise_h, noise_w), dtype=np.uint8)
+            noise = cv2.resize(noise, (w, h), interpolation=cv2.INTER_CUBIC)
+            
+            blur_size = int(min(w, h) * 0.2) | 1
+            splotches_mask = cv2.GaussianBlur(noise, (blur_size, blur_size), 0)
+            
+            splotches_alpha = (splotches_mask / 255.0 * self.splotch_opacity).astype(np.float32)
+
+            # FIX: Apply splotch color only where the noise mask is active, not everywhere.
+            # This prevents the uniform hazy wash and lets other effects show through.
+            active_mask = splotches_alpha > 0
+            overlay[active_mask, :3] = self.splotch_base_color
+            overlay[active_mask, 3] = (splotches_alpha[active_mask] * 255).astype(np.uint8)
+
+        # --- 2. Dust Specks (Bokeh) ---
         for _ in range(self.num_specks):
-            x = random.randint(0, w - 1)
-            y = random.randint(0, h - 1)
-            img_out[y, x] = self.speck_color
+            x, y = random.randint(0, w - 1), random.randint(0, h - 1)
+            radius = random.randint(*self.speck_radius_range)
+            cv2.circle(overlay, (x, y), radius, self.speck_color, -1, lineType=cv2.LINE_AA)
 
-        # 2. Add scratches/fibers
+        # --- 3. Scratches / Fibers ---
         for _ in range(self.num_scratches):
             x1, y1 = random.randint(0, w - 1), random.randint(0, h - 1)
-            dx = random.randint(*self.scratch_length_range)
-            dy = random.randint(*self.scratch_length_range)
-            x2, y2 = x1 + dx, y1 + dy
-            color_val = random.randint(*self.scratch_color_range)
-            color = (color_val,) * 3
-            cv2.line(img_out, (x1, y1), (x2, y2), color, 1, lineType=cv2.LINE_AA)
+            angle = random.uniform(0, 2 * np.pi)
+            length = random.randint(*self.scratch_length_range)
+            x2, y2 = int(x1 + length * np.cos(angle)), int(y1 + length * np.sin(angle))
+            cv2.line(overlay, (x1, y1), (x2, y2), self.scratch_color, 1, lineType=cv2.LINE_AA)
             
-        # 3. Add larger, semi-transparent splotches (grime)
-        splotches = np.zeros((h, w, 1), dtype=np.float32)
-        min_splotch_size = int(w * self.splotch_size_range_factor[0])
-        max_splotch_size = int(w * self.splotch_size_range_factor[1])
-
-        for _ in range(self.num_splotches):
-            x, y = random.randint(0, w - 1), random.randint(0, h - 1)
-            size = random.randint(min_splotch_size, max_splotch_size)
-            cv2.circle(splotches, (x, y), size, (1,), -1, lineType=cv2.LINE_AA)
+        # --- Final Blending ---
+        img_out_rgba = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
+        alpha = overlay[..., 3, np.newaxis] / 255.0
         
-        kernel_size = int(min(h, w) * 0.2)
-        if kernel_size % 2 == 0: kernel_size += 1
-        splotches = cv2.GaussianBlur(splotches, (kernel_size, kernel_size), 0)
+        img_out_rgba[..., :3] = overlay[..., :3] * alpha + img_out_rgba[..., :3] * (1 - alpha)
         
-        splotch_max = splotches.max()
-        if splotch_max > 0:
-            splotches = (splotches / splotch_max) * self.splotch_opacity
-        
-        # Ensure splotches is broadcastable
-        splotches = splotches[..., np.newaxis]
-
-        img_out_float = img_out.astype(np.float32) / 255.0
-        # Blend using screen-like logic for darkening
-        img_out_float = 1 - (1 - img_out_float) * (1 - splotches)
-        img_out = np.clip(img_out_float * 255, 0, 255).astype(np.uint8)
-
-        return img_out
-
+        return cv2.cvtColor(img_out_rgba, cv2.COLOR_RGBA2RGB)
 # ====================================================================================
 #  2. COMMAND-LINE INTERFACE and EXECUTION
 # ====================================================================================

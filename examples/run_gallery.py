@@ -32,9 +32,15 @@ effect_presets = {
     "Heavy Rain": Rain(num_drops=100, radius_range=(4, 8), magnification=1.15),
 
     # Row 2: Dust Progression
-    "Light Dust": Dust(num_specks=100, num_scratches=0, splotch_opacity=0.06),
-    "Moderate Dust": Dust(num_specks=1000, num_scratches=2, splotch_opacity=0.15),
-    "Heavy Dust": Dust(num_specks=5000, num_scratches=3, splotch_opacity=0.25),
+    "Light Dust": Dust(
+        num_specks=20, speck_opacity=0.4, num_scratches=1, splotch_opacity=0.1
+    ),
+    "Moderate Dust/Scratches": Dust(
+        num_specks=40, speck_opacity=0.4, num_scratches=3, splotch_opacity=0.05
+    ),
+    "Heavy Dust/Scratches": Dust(
+        num_specks=50, speck_opacity=0.8, num_scratches=5, splotch_opacity=0.02
+    ),
 
     # Row 3: Glare Adversary Progression
     "Light Glare": Glare(
