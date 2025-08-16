@@ -69,25 +69,6 @@ To see a gallery of all available effects and presets, run the example script. T
 python examples/run_gallery.py
 ```
 
-### 3. Training a Model
-
-The `train_model.py` script trains a simple CNN on the German Traffic Sign Recognition Benchmark (GTSRB) dataset. You can specify different augmentation effects for the training and validation sets.
-
-1.  **Download the data:**
-    You must first download the GTSRB dataset and place the training images in a `GTSRB/` directory. You can find the data here: [GTSRB Dataset](https://benchmark.ini.rub.de/gtsrb_news.html). Your structure should look like `GTSRB/Final_Training/Images/00000/...`.
-
-2.  **Run training:**
-    The following command trains a model on images with "heavy dust" and evaluates it on images with "light rain".
-
-    ```bash
-    python train_model.py \
-        --data-dir GTSRB/Final_Training/Images/ \
-        --epochs 15 \
-        --train-effect heavy_dust \
-        --eval-effect light_rain \
-        --save-path models/dusty_model.pth
-    ```
-
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
