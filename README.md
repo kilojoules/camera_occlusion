@@ -16,6 +16,7 @@ obscure-image GTSRB_dataset/GTSRB/Final_Training/Images/00000/00000_00000.ppm  o
 
 * **Rain Effect**: Simulates raindrops on a camera lens with distortion, shading, and highlights.
 * **Dust Effect**: Simulates fine dust specks, scratches, and semi-transparent grime splotches.
+* **Glare Effect**: Simulates sun glare effects.
 * **PyTorch Integration**: Includes a `Dataset` class for on-the-fly data augmentation during model training.
 * **Command-Line Tools**: Apply effects to single images or train a model directly from the command line.
 
@@ -44,7 +45,7 @@ There are three main ways to use this project:
 
 ### 1. As a Python Library
 
-You can easily import and use the `Rain` and `Dust` effect classes in your own scripts.
+You can easily import and use the `Rain`, `Glare`, and `Dust` effect classes in your own scripts.
 
 ```python
 import imageio.v2 as imageio
