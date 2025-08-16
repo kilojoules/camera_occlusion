@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "camera-occlusion"
+version = "0.1.0"
+authors = [
+  { name="Julian Quick" }
+]
+description = "A library for applying realistic camera occlusion effects like rain and dust for computer vision data augmentation."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file="LICENSE" } # You should create a LICENSE file (e.g., with the MIT license text)
+keywords = ["computer vision", "data augmentation", "image processing", "rain", "dust", "occlusion"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+# Core dependencies are listed here
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "imageio",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/your-username/camera-occlusion" # Update with your repo URL
+"Bug Tracker" = "https://github.com/your-username/camera-occlusion/issues" # Update with your repo URL
+
+# This creates the command-line script
+# Running `obscure-image` in the terminal will execute the `main` function
+[project.scripts]
+obscure-image = "camera_occlusion.camera_noise:main"
+
+# Optional dependencies for running examples or tests
+[project.optional-dependencies]
+examples = [
+    "matplotlib",
+    "imageio[ffmpeg]", # ffmpeg plugin for handling more image types like .ppm
+]
+dev = [
+    "torch",
+    "torchvision",
+    "tqdm",
+    "pytest",
+    "check-manifest",
+    "twine",
+]

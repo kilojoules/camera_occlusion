@@ -5,6 +5,12 @@ This project provides a Python library and tools for applying realistic, paramet
 
 ![Example noise image](examples/example_noise.png)
 
+## Quick Start
+```
+pip install ...
+obscure-image GTSRB_dataset/GTSRB/Final_Training/Images/00000/00000_00000.ppm  out.ppm --effect rain
+```
+
 ## Features
 
 * **Rain Effect**: Simulates raindrops on a camera lens with distortion, shading, and highlights.
