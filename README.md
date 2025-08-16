@@ -1,4 +1,5 @@
 # Realistic Camera Occlusion Effects for Computer Vision
+[![PyPI version](https://img.shields.io/pypi/v/camera-occlusion.svg)](https://pypi.org/project/camera-occlusion/)
 
 This project provides a Python library and tools for applying realistic, parameterized camera occlusion effects like rain and dust to images. It's designed for data augmentation in computer vision tasks, such as training a traffic sign classifier to be more robust against adverse conditions.
 
@@ -7,7 +8,7 @@ This project provides a Python library and tools for applying realistic, paramet
 
 ## Quick Start
 ```
-pip install ...
+pip install camera_occlusion
 obscure-image GTSRB_dataset/GTSRB/Final_Training/Images/00000/00000_00000.ppm  out.ppm --effect rain
 ```
 
