@@ -20,7 +20,116 @@ class Effect(ABC):
         """Allows the class instance to be called as a function."""
         return self.apply(image)
 
+import cv2
+import numpy as np
+import random
+from abc import ABC, abstractmethod
+
+# (Keep your existing Effect ABC and other classes)
+
 class Rain(Effect):
+    """
+    Simulates raindrops on a camera lens with physically-inspired effects.
+    
+    This effect models raindrops as small lenses, introducing several phenomena:
+        - Refraction: The image seen through the drop is inverted and distorted.
+        - Gravity: Larger drops are slightly elongated downwards.
+        - Edge Blur: The drop's contents are blurred to simulate a different focal plane.
+        - Lighting: A dark edge and a specular highlight give the drop a 3D appearance.
+        - Chromatic Aberration: Subtle color fringing appears at the drop's edges.
+    """
+    def __init__(self,
+                 num_drops: int = 40,
+                 radius_range: tuple = (3, 10),
+                 magnification: float = 0.8,
+                 blur_amount: int = 5,
+                 elongation_factor: float = 1.2,
+                 chromatic_aberration: float = 0.03,
+                 highlight_alpha: float = 0.6,
+                 shade_alpha: float = 0.3):
+        """
+        Initializes the Rain effect with detailed parameters.
+        """
+        self.num_drops = num_drops
+        self.radius_range = radius_range
+        self.magnification = max(0.1, magnification)
+        self.blur_amount = blur_amount if blur_amount % 2 != 0 else blur_amount + 1
+        self.elongation_factor = elongation_factor
+        self.chromatic_aberration = chromatic_aberration
+        # Storing colors as BGRA for OpenCV compatibility
+        self.highlight_color = (255, 255, 255, int(highlight_alpha * 255))
+        self.shade_color = (0, 0, 0, int(shade_alpha * 255))
+
+    def apply(self, image):
+        img_out = image.copy()
+        h, w, _ = image.shape
+
+        # --------------------- FIX: Create a transparent overlay for highlights/shadows ---------------------
+        # This allows for proper alpha blending and anti-aliasing of lighting effects.
+        overlay = np.zeros((h, w, 4), dtype=np.uint8)
+
+        for _ in range(self.num_drops):
+            radius = random.randint(*self.radius_range)
+            elongation = 1.0 + (radius / self.radius_range[1]) * (self.elongation_factor - 1.0)
+            radius_y = int(radius * elongation)
+
+            center_x = random.randint(radius, w - radius)
+            center_y = random.randint(radius_y, h - radius_y)
+            
+            x1, y1 = center_x - radius, center_y - radius_y
+            x2, y2 = center_x + radius, center_y + radius_y
+            patch = image[y1:y2, x1:x2]
+            
+            if patch.size == 0: continue
+
+            refracted_patch = cv2.resize(patch, (0, 0), fx=self.magnification, fy=self.magnification, interpolation=cv2.INTER_LINEAR)
+            refracted_patch = cv2.flip(refracted_patch, 0)
+            
+            rh, rw, _ = refracted_patch.shape
+            ph, pw, _ = patch.shape
+            
+            if self.magnification < 1.0:
+                distorted_patch = np.copy(patch)
+                paste_x, paste_y = (pw - rw) // 2, (ph - rh) // 2
+                distorted_patch[paste_y:paste_y+rh, paste_x:paste_x+rw] = refracted_patch
+            else:
+                crop_x, crop_y = (rw - pw) // 2, (rh - ph) // 2
+                distorted_patch = refracted_patch[crop_y:crop_y+ph, crop_x:crop_x+pw]
+
+            if distorted_patch.shape != patch.shape: continue
+
+            if self.chromatic_aberration > 0:
+                offset = int(radius * self.chromatic_aberration)
+                b, g, r = cv2.split(distorted_patch)
+                r_shifted, b_shifted = np.roll(r, offset, axis=1), np.roll(b, -offset, axis=1)
+                distorted_patch = cv2.merge([b_shifted, g, r_shifted])
+
+            distorted_patch = cv2.GaussianBlur(distorted_patch, (self.blur_amount, self.blur_amount), 0)
+
+            mask = np.zeros_like(patch, dtype=np.uint8)
+            cv2.ellipse(mask, (radius, radius_y), (radius, radius_y), 0, 0, 360, (255, 255, 255), -1, lineType=cv2.LINE_AA)
+            
+            img_out[y1:y2, x1:x2] = np.where(mask > 0, distorted_patch, img_out[y1:y2, x1:x2])
+
+            # Draw smooth, anti-aliased lighting effects ON THE OVERLAY
+            cv2.ellipse(overlay, (center_x, center_y), (radius, radius_y), 0, 0, 360, self.shade_color, 1, lineType=cv2.LINE_AA)
+            highlight_radius, highlight_radius_y = int(radius * 0.7), int(radius_y * 0.7)
+            cv2.ellipse(overlay, (center_x, center_y), (highlight_radius, highlight_radius_y), 0, 225, 315, self.highlight_color, -1, lineType=cv2.LINE_AA)
+
+        # --------------------- FIX: Alpha-blend the overlay onto the final image ---------------------
+        # Convert output to 4-channel to prepare for blending
+        img_out_rgba = cv2.cvtColor(img_out, cv2.COLOR_RGB2RGBA)
+        
+        # Extract the alpha channel from the overlay and expand it to 3 channels
+        alpha = overlay[..., 3, np.newaxis] / 255.0
+        
+        # Blend the overlay (RGB channels) with the main image
+        img_out_rgba[..., :3] = overlay[..., :3] * alpha + img_out_rgba[..., :3] * (1 - alpha)
+        
+        # Convert back to RGB for final output
+        return cv2.cvtColor(img_out_rgba, cv2.COLOR_RGBA2RGB)
+
+class Simple_Rain(Effect):
     """
     Simulates raindrops on a camera lens with distortion, shading, and highlights.
     
