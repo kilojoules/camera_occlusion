@@ -1,50 +1,90 @@
-import matplotlib.pyplot as plt
-from camera_occlusion.camera_noise import Rain, Dust
-import imageio.v2 as imageio
-import cv2
 import sys
+import cv2
+import imageio.v2 as imageio
+import matplotlib.pyplot as plt
 
-# 1. SETUP & IMAGE LOADING
-# -------------------------
-IMAGE_PATH = 'GTSRB/Final_Training/Images/00001/00000_00000.ppm'
+from camera_occlusion.camera_noise import Rain, Dust, Glare
 
-try:
-    original_image = imageio.imread(IMAGE_PATH)
-    if original_image.ndim == 2:
-        original_image = cv2.cvtColor(original_image, cv2.COLOR_GRAY2RGB)
-    elif original_image.shape[2] == 4:
-        original_image = cv2.cvtColor(original_image, cv2.COLOR_RGBA2RGB)
-except FileNotFoundError:
-    print(f"Error: The image file was not found at '{IMAGE_PATH}'")
-    sys.exit(1)
 
-# 2. DEFINE EFFECT LEVELS
-# -----------------------
+# -------- Helpers --------
+def load_rgb(path):
+    """Load image and ensure RGB."""
+    try:
+        img = imageio.imread(path)
+    except FileNotFoundError:
+        print(f"Error: The image file was not found at '{path}'")
+        sys.exit(1)
+
+    if img.ndim == 2:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    elif img.shape[2] == 4:
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+    return img
+
+
+# -------- Config --------
+IMAGE_PATH = "../GTSRB_dataset/GTSRB/Final_Training/Images/00001/00000_00000.ppm"
+
 effect_presets = {
+    # Row 1: Rain Progression
     "Light Rain": Rain(num_drops=15, radius_range=(2, 4), magnification=1.03),
     "Moderate Rain": Rain(num_drops=40, radius_range=(3, 6), magnification=1.08),
     "Heavy Rain": Rain(num_drops=100, radius_range=(4, 8), magnification=1.15),
+
+    # Row 2: Dust Progression
     "Light Dust": Dust(num_specks=100, num_scratches=0, splotch_opacity=0.06),
     "Moderate Dust": Dust(num_specks=1000, num_scratches=2, splotch_opacity=0.15),
-    "Heavy Dust": Dust(num_specks=5000, num_scratches=3, splotch_opacity=0.25)
+    "Heavy Dust": Dust(num_specks=5000, num_scratches=3, splotch_opacity=0.25),
+
+    # Row 3: Glare Adversary Progression
+    "Light Glare": Glare(
+        source_threshold=0.9,
+        intensity=0.5,
+        num_streaks=6,
+        ghost_count=2,
+        chromatic_aberration=1.0
+    ),
+    "Moderate Glare": Glare(
+        source_threshold=0.85,
+        intensity=0.85,
+        num_streaks=8,
+        ghost_count=4,
+        chromatic_aberration=1.5
+    ),
+    "Heavy Glare": Glare(
+        source_threshold=0.75,         # Stays low to be more sensitive
+        intensity=0.95,                # Reduced below 1.0 to prevent blowout
+        num_streaks=8,
+        streak_length_factor=2.5,      # Increased to make streaks longer
+        ghost_count=6,                 # Stays high for complexity
+        chromatic_aberration=1.8       # Reduced for more natural color fringing
+    ),
 }
 
-# 3. GENERATE AND PLOT
-# --------------------
-fig, axes = plt.subplots(2, 3, figsize=(16, 10))
-fig.suptitle('Parameterized Camera Occlusion Gallery (Corrected Import)', fontsize=18)
 
-preset_list = list(effect_presets.items())
+# -------- Run --------
+def main():
+    img = load_rgb(IMAGE_PATH)
 
-for i, ax in enumerate(axes.flat):
-    if i < len(preset_list):
-        title, effect_instance = preset_list[i]
-        print(f"Applying effect: {title}...")
-        augmented_image = effect_instance(original_image)
-        ax.imshow(augmented_image)
+    # Force a 3x3 grid
+    rows, cols = 3, 3
+    fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows))
+    axes = axes.flatten()
+
+    for i, (title, preset) in enumerate(effect_presets.items()):
+        if i >= len(axes): break # Stop if we have more presets than axes
+        
+        ax = axes[i]
+        augmented = preset(img)
+        ax.imshow(augmented)
         ax.set_title(title, fontsize=14)
-    ax.axis('off')
+        ax.axis("off")
 
-plt.tight_layout(rect=[0, 0, 1, 0.95])
-plt.show()
+    fig.suptitle("Camera Occlusion Gallery", fontsize=18)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig('examples/example_noise.png', dpi=125)
+    plt.clf()
 
+
+if __name__ == "__main__":
+    main()
