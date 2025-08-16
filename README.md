@@ -35,7 +35,7 @@ obscure-image GTSRB_dataset/GTSRB/Final_Training/Images/00000/00000_00000.ppm  o
 
 3.  **Install the required packages:**
     ```bash
-    pip install -r requirements.txt
+    pip install -e .
     ```
 
 ## Usage
