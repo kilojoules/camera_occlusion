@@ -41,9 +41,6 @@ obscure-image GTSRB_dataset/GTSRB/Final_Training/Images/00000/00000_00000.ppm  o
 
 ## Usage
 
-There are three main ways to use this project:
-
-### 1. As a Python Library
 
 You can easily import and use the `Rain`, `Glare`, and `Dust` effect classes in your own scripts.
 
@@ -62,7 +59,7 @@ augmented_image = heavy_rain(image)
 imageio.imwrite("rainy_image.jpg", augmented_image)
 ```
 
-### 2. Gallery Demonstration
+### Gallery Demonstration
 
 To see a gallery of all available effects and presets, run the example script. This will generate a plot showing various levels of rain and dust.
 
