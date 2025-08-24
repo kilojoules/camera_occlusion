@@ -65,6 +65,13 @@ To see a gallery of all available effects and presets, run the example script. T
 
 ```bash
 python examples/run_gallery.py
+
+
+Unlike general-purpose libraries that apply stylized effects, `camera-occlusion` focuses on simulating the physical properties of a camera lens to produce highly realistic artifacts. This comparison shows the difference between our physically-inspired effects and the approximations from a standard augmentation library.
+
+![Comparison with Albumentations](examples/comparison_with_albumentations.png)
+*A side-by-side comparison between `camera-occlusion` (center) and `albumentations` (right). Note the realistic lens distortion in the rain drops and the starburst streaks in the glare.*
+
 ```
 
 ## License
