@@ -1,0 +1,22 @@
+env:
+  task_name: "google_robot_pick_coke_can"
+  policy_model: "octo-base"
+  max_episode_steps: 80
+  control_freq: 3
+  sim_freq: 513
+
+demo_collection:
+  max_attempts: 30
+  target_demos: 2
+
+finetuning:
+  freeze_transformer: true
+  learning_rate: 0.00003
+  n_steps: 10
+  batch_size: 4
+
+evaluation:
+  severity_levels: ["clean", "heavy"]
+  episodes_per_eval: 2
+
+output_dir: "results/dust_robustness_quick"

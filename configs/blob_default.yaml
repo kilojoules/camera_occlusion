@@ -1,0 +1,29 @@
+dust_model_type: "blob"
+
+blob:
+  num_blobs: 5
+  max_opacity: 0.6
+  dust_color: [180, 160, 140]
+  dirty_threshold: 0.05
+  sigma_range: [0.02, 0.30]
+  velocity_range: [-0.005, 0.005]
+  growth_rate_range: [-0.002, 0.005]
+
+optimization:
+  population_size: 20
+  max_generations: 50
+  sigma0: 0.2
+  seed: 42
+  episodes_per_eval: 5
+  episodes_final_eval: 25
+  n_random_baselines: 10
+
+env:
+  task_name: "google_robot_pick_coke_can"
+  policy_model: "octo-base"
+  max_episode_steps: 200
+
+sweep:
+  budget_levels: [0.05, 0.10, 0.20, 0.40]
+
+output_dir: "results/blob_default"

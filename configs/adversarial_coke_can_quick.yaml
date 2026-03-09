@@ -1,0 +1,29 @@
+blob_generator:
+  k_max: 4
+  encoder_channels: [8, 16]
+  mlp_hidden: 16
+  sigma_min: 0.02
+  sigma_max: 0.30
+  max_opacity: 0.6
+  learning_rate: 0.001
+  explore_sigma: 0.02
+  dust_color: [180, 160, 140]
+  dirty_threshold: 0.05
+
+training:
+  n_rounds: 2
+  attacker_steps_per_round: 3
+  episodes_per_reinforce_sample: 1
+  n_samples_per_step: 2
+  budget_levels: [1, 2]
+  eval_episodes: 2
+  seed: 42
+
+env:
+  task_name: "google_robot_pick_coke_can"
+  policy_model: "octo-base"
+  max_episode_steps: 80
+  control_freq: 3
+  sim_freq: 513
+
+output_dir: "results/adversarial_coke_can_quick"

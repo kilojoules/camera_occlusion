@@ -1,0 +1,34 @@
+generator:
+  latent_dim: 8
+  encoder_channels: [8, 16]
+  decoder_channels: [16, 8]
+  intermediate_resolution: [8, 8]
+  max_opacity: 0.6
+  num_blobs: 3
+  learning_rate: 0.001
+  explore_sigma: 0.05
+  dust_color: [180, 160, 140]
+  dirty_threshold: 0.05
+
+defender:
+  freeze_pattern: "head_only"
+  learning_rate: 0.0003
+  grpo_episodes_per_round: 4
+  grpo_update_steps: 5
+  grpo_batch_size: 4
+
+training:
+  n_rounds: 2
+  attacker_steps_per_round: 5
+  episodes_per_reinforce_sample: 1
+  n_samples_per_step: 2
+  budget_levels: [0.20]
+  eval_episodes: 2
+  seed: 42
+
+env:
+  task_name: "widowx_put_eggplant_in_basket"
+  policy_model: "octo-small"
+  max_episode_steps: 200
+
+output_dir: "results/adversarial_quick_test"

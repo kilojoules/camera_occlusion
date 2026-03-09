@@ -1,0 +1,38 @@
+blob_generator:
+  k_max: 4
+  encoder_channels: [16, 32, 64]
+  mlp_hidden: 64
+  sigma_min: 0.02
+  sigma_max: 0.08
+  max_opacity: 0.95
+  learning_rate: 0.001
+  explore_sigma: 0.02
+  dust_color: [0, 0, 0]
+  dirty_threshold: 0.05
+  temporal: true
+  max_t_width: 1.0
+  temporal_sharpness: 20.0
+
+# Match dust_color/max_opacity for MaskApplicator
+generator:
+  max_opacity: 0.95
+  dust_color: [0, 0, 0]
+  dirty_threshold: 0.05
+
+training:
+  n_rounds: 1
+  attacker_steps_per_round: 5
+  episodes_per_reinforce_sample: 3
+  n_samples_per_step: 2
+  budget_levels: [0.10, 0.20]
+  eval_episodes: 10
+  seed: 42
+
+env:
+  task_name: "google_robot_pick_coke_can"
+  policy_model: "internvla-m1"
+  max_episode_steps: 80
+  internvla_m1_port: 10093
+  internvla_m1_ckpt: "/root/internvla_m1_ckpt/checkpoints/steps_50000_pytorch_model.pt"
+
+output_dir: "results/adversarial_internvla_m1"

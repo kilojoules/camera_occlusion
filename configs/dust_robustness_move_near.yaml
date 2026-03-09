@@ -1,0 +1,20 @@
+env:
+  task_name: "google_robot_move_near"
+  policy_model: "octo-base"
+  max_episode_steps: 80
+
+demo_collection:
+  max_attempts: 500
+  target_demos: 20
+
+finetuning:
+  freeze_transformer: true
+  learning_rate: 0.00003
+  n_steps: 2000
+  batch_size: 32
+
+evaluation:
+  severity_levels: ["clean"]
+  episodes_per_eval: 20
+
+output_dir: "results/dust_robustness_move_near"
