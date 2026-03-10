@@ -16,14 +16,36 @@ def setup_logging(output_dir: str):
     log_dir = Path(output_dir)
     log_dir.mkdir(parents=True, exist_ok=True)
 
+    file_handler = logging.FileHandler(log_dir / "envelope.log")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+
+    # Flush on every log line so we can monitor progress via tail
+    class FlushHandler(logging.StreamHandler):
+        def emit(self, record):
+            super().emit(record)
+            self.flush()
+
+    stream_handler = FlushHandler(sys.stdout)
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
+
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler(log_dir / "envelope.log"),
-        ],
+        handlers=[stream_handler, file_handler],
+        force=True,
     )
+
+    # Also explicitly configure the adversarial_dust loggers
+    # (some library imports may interfere with propagation)
+    for name in ["adversarial_dust", "adversarial_dust.envelope_predictor",
+                 "adversarial_dust.evaluator", "adversarial_dust.optimizer"]:
+        lgr = logging.getLogger(name)
+        lgr.handlers = []
+        lgr.addHandler(file_handler)
+        lgr.addHandler(stream_handler)
+        lgr.setLevel(logging.INFO)
+        lgr.propagate = False
 
 
 def create_policy(config: EnvelopeExperimentConfig):
@@ -32,6 +54,10 @@ def create_policy(config: EnvelopeExperimentConfig):
     policy_setup = "widowx_bridge" if task_name.startswith("widowx") else "google_robot"
 
     if config.env.policy_model.startswith("internvla-m1"):
+        import sys
+        internvla_root = "/root/InternVLA-M1"
+        if internvla_root not in sys.path:
+            sys.path.insert(0, internvla_root)
         from examples.SimplerEnv.model2simpler_interface import M1Inference
 
         return M1Inference(

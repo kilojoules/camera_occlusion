@@ -1,0 +1,48 @@
+# Safe Operating Envelope: Eggplant + InternVLA-M1 (lean config ~6h on RTX 4090)
+#
+# InternVLA-M1 episodes take ~2-3 min each (200 steps, GPU inference per step).
+# This config keeps total episode count manageable.
+
+env:
+  task_name: "widowx_put_eggplant_in_basket"
+  policy_model: "internvla-m1"
+  max_episode_steps: 100
+  internvla_m1_port: 10093
+  internvla_m1_ckpt: "/root/internvla_m1_ckpt/checkpoints/steps_50000_pytorch_model.pt"
+
+envelope:
+  occlusion_types:
+    - fingerprint
+    - glare
+  budget_levels:
+    - 0.05
+    - 0.15
+    - 0.30
+  episodes_per_eval: 2
+  episodes_final_eval: 5
+  population_size: 5
+  max_generations: 3
+  sigma0: 0.3
+  seed: 42
+  n_random_baselines: 2
+  safe_threshold: 0.95
+  marginal_threshold: 0.70
+
+fingerprint:
+  num_prints: 3
+  max_opacity: 0.5
+  smudge_color: [200, 190, 170]
+  dirty_threshold: 0.05
+  scale_range: [0.05, 0.25]
+  freq_range: [3.0, 15.0]
+
+glare:
+  max_intensity: 0.8
+  num_streaks: 6
+  chromatic_aberration: 1.5
+  ghost_count: 4
+  ghost_spacing: 0.4
+  ghost_decay: 0.85
+  dirty_threshold: 0.05
+
+output_dir: "results/envelope_eggplant_internvla"
