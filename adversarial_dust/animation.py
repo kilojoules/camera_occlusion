@@ -289,15 +289,17 @@ def record_adversarial_episode(
     dust_color: tuple = (180, 160, 140),
     fps: int = 10,
     two_panel: bool = False,
+    single_panel: bool = True,
     temporal_sharpness: Optional[float] = None,
 ) -> bool:
-    """Record a single episode with a raw alpha mask or temporal blob params.
+    """Record a single episode showing what the policy sees under occlusion.
 
-    Creates a 2-panel video (clean | policy view) when ``two_panel=True``,
-    or 3-panel (clean | policy view | dust highlighted) otherwise.
+    By default (``single_panel=True``), renders a single full-size frame
+    showing the occluded image with the occlusion pattern highlighted so
+    the viewer can clearly see the noise. A small success/fail badge is
+    overlaid at the end.
 
-    Temporal mode is auto-detected when ``mask_or_params`` has shape (K, 7)
-    and ``temporal_sharpness`` is provided.
+    Set ``single_panel=False`` for the legacy multi-panel layout.
 
     Args:
         env_config: EnvConfig with task_name, max_episode_steps, etc.
@@ -307,7 +309,8 @@ def record_adversarial_episode(
         budget_label: Label string for the dirty panel header.
         dust_color: RGB tuple for dust blending.
         fps: Frames per second for the video.
-        two_panel: If True, render only clean | dirty (no heatmap).
+        two_panel: If True, render only clean | dirty (no heatmap). Ignored when single_panel=True.
+        single_panel: If True (default), render one frame with highlighted occlusion.
         temporal_sharpness: If provided with (K, 7) params, enables temporal mode.
 
     Returns:
@@ -404,7 +407,18 @@ def record_adversarial_episode(
         am = alpha_masks[t] if t < len(alpha_masks) else None
         has_mask = am is not None
 
-        if has_mask and not two_panel:
+        if single_panel:
+            # Single frame: show exactly what the model sees (raw occluded image)
+            frame = d.copy()
+            # Add label bar at top
+            h, w = frame.shape[:2]
+            canvas = np.full((h + 30, w, 3), 255, dtype=np.uint8)
+            canvas[30:, :] = frame
+            label = budget_label if budget_label else "Clean"
+            cv2.putText(canvas, label, (10, 22),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+            frame = canvas
+        elif has_mask and not two_panel:
             highlight_label = f"Dust Highlighted ({budget_label})" if budget_label else "Dust Highlighted"
             highlighted = _make_dust_heatmap_overlay(c, am)
             frame = _stitch_panels(c, d, highlighted, "Clean", dirty_label, highlight_label)
@@ -425,6 +439,15 @@ def record_adversarial_episode(
             )
 
         stitched.append(frame)
+
+    # Stamp success/fail on last 10 frames
+    badge_text = "SUCCESS" if success else "FAIL"
+    badge_color = (0, 180, 0) if success else (220, 0, 0)
+    n_badge = min(10, len(stitched))
+    for i in range(len(stitched) - n_badge, len(stitched)):
+        fh, fw = stitched[i].shape[:2]
+        cv2.putText(stitched[i], badge_text, (fw - 160, fh - 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, badge_color, 3)
 
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     h, w = stitched[0].shape[:2]

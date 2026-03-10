@@ -1,0 +1,54 @@
+# Extreme occlusion: actually break InternVLA-M1
+#
+# Previous stress test (budgets up to 80%) couldn't break the model.
+# Root cause: max_opacity=0.5, max_intensity=0.8 are too subtle.
+#
+# This config cranks up to fully opaque smudges and full-intensity glare,
+# with larger/more numerous prints and stronger glare effects.
+# Budget range 30%-95% to focus on where breakdowns should occur.
+
+env:
+  task_name: "widowx_put_eggplant_in_basket"
+  policy_model: "internvla-m1"
+  max_episode_steps: 100
+  internvla_m1_port: 10093
+  internvla_m1_ckpt: "/root/internvla_m1_ckpt/checkpoints/steps_50000_pytorch_model.pt"
+
+envelope:
+  occlusion_types:
+    - fingerprint
+    - glare
+  budget_levels:
+    - 0.30
+    - 0.50
+    - 0.70
+    - 0.85
+    - 0.95
+  episodes_per_eval: 3
+  episodes_final_eval: 10
+  population_size: 8
+  max_generations: 5
+  sigma0: 0.3
+  seed: 42
+  n_random_baselines: 3
+  safe_threshold: 0.95
+  marginal_threshold: 0.70
+
+fingerprint:
+  num_prints: 5
+  max_opacity: 1.0
+  smudge_color: [160, 140, 110]
+  dirty_threshold: 0.05
+  scale_range: [0.10, 0.40]
+  freq_range: [3.0, 15.0]
+
+glare:
+  max_intensity: 1.0
+  num_streaks: 8
+  chromatic_aberration: 2.0
+  ghost_count: 6
+  ghost_spacing: 0.3
+  ghost_decay: 0.9
+  dirty_threshold: 0.05
+
+output_dir: "results/envelope_eggplant_internvla_extreme"
