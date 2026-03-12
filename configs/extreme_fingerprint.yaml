@@ -1,6 +1,6 @@
 # Fingerprint-only sweep (parallel worker 1, port 10093)
 env:
-  task_name: "widowx_put_eggplant_in_basket"
+  task_name: "google_robot_pick_coke_can"
   policy_model: "internvla-m1"
   max_episode_steps: 100
   internvla_m1_port: 10093
@@ -10,6 +10,7 @@ envelope:
   occlusion_types:
     - fingerprint
   budget_levels:
+    - 0.0
     - 0.10
     - 0.30
     - 0.50
@@ -33,4 +34,4 @@ fingerprint:
   scale_range: [0.05, 0.15]
   freq_range: [3.0, 15.0]
 
-output_dir: "results/extreme_fingerprint"
+output_dir: "results/coke_can_fingerprint"

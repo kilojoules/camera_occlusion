@@ -1,6 +1,6 @@
 # Glare-only sweep (parallel worker 2, port 10094)
 env:
-  task_name: "widowx_put_eggplant_in_basket"
+  task_name: "google_robot_pick_coke_can"
   policy_model: "internvla-m1"
   max_episode_steps: 100
   internvla_m1_port: 10094
@@ -10,6 +10,7 @@ envelope:
   occlusion_types:
     - glare
   budget_levels:
+    - 0.0
     - 0.10
     - 0.30
     - 0.50
@@ -34,4 +35,4 @@ glare:
   ghost_decay: 0.9
   dirty_threshold: 0.05
 
-output_dir: "results/extreme_glare"
+output_dir: "results/coke_can_glare"
